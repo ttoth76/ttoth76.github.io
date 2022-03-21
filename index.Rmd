@@ -1,0 +1,46 @@
+---
+title: "For privicy reasons the below information is about a world famous novelist:"
+output:
+  html_document:
+    theme: cerulean
+    highlight: textmate
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+$~$
+
+
+### My name is __*Thomas Mann*__
+
+$~$
+
+
+![A picture of me taken in 1929 just before winning the Nobel Prize in Literature:](Thomas_Mann_1929.jpeg)
+
+$~$
+
+### I'm from Lübeck, Germany
+
+$~$
+
+### I'm interested in **fishing** so I bought a cottage built in the fishing village of Nidden.
+
+$~$
+
+
+### I'm a permanent home based novelist.
+
+$~$
+
+
+### I studied science at a Lübeck Gymnasium (secondary school), then attended the Ludwig Maximillians University of Munich as well as the Technical University of Munich, where, in preparation for a journalism career, I studied history, economics, art history and literature. Later on I went on to study Data Science at SMU.
+
+
+$~$
+
+
+## **“The other tabs represent work / analyses that I have completed.  Please check them out!”**
+
