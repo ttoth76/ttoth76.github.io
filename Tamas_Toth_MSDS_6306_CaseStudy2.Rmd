@@ -1,0 +1,916 @@
+---
+title: "CaseStudy2DDS"
+author: "Tamas Toth"
+date: '2022-04-16'
+output: 
+  html_document:
+    theme: cerulean
+    highlight: textmate
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+$~$
+
+#### Loading the necessary R libraries for the analysis
+
+```{r message = FALSE}
+# Load the necessary libraries
+library(knitr)
+library(rmarkdown)
+library(egg)
+library(ggpubr)
+library(dplyr)
+library(tidyr)
+library(plyr)
+library(ggplot2)
+library(maps)
+library(mapproj)
+library(sf)
+library(usmap)
+library(urbnmapr)
+library(tidyverse)
+library(mice)
+library(VIM)
+library(lattice)
+library(ggthemes)
+library(e1071)
+library(class)
+library(caret)
+library(stringr)
+library(sjPlot)
+library(data.table)
+library(reshape2)
+library(corrplot)
+library(naivebayes)
+library(car)
+library(RColorBrewer)
+```
+```{r message = FALSE}
+# Turn off scientific notation
+options(scipen = 100, digits = 4)
+```
+
+$~$
+
+## __Background & Context__:
+DDSAnalytics is an analytics company that specializes in talent management solutions for Fortune 100 companies. There is a desire to gain competitive advantage by leveraging Data Science to improve actionable insight to talent management. The executive leadership identified an opportunity to harness machine learning capabilities to predict employee turnover. Further to this this they would like to see Salary predictions for employees. 
+
+## __Objective__:
+1. Explore and visualize the dataset to provide job role specific trends.
+2. Build classification models to predict if an employee will leave the company or not. Use KNN and Naive Bayes models.
+3. Build regression model to predict salary for ONLY those employees who are still with the company using Multiple Linear Regression.
+4. Optimize the model using appropriate techniques
+5. Generate a set of insights and recommendations that will help the DDSAnalytics to to identify factors that lead to attrition.
+
+### __Data Dictionary__:
+>##### -__ID__                      : int : Identification number in the Data Set  
+>##### -__Age__                     : int : Employee's age
+>##### -__Attrition__               : chr : Yes/No - Employee left the company?
+>##### -__BusinessTravel__          : chr : Frequency for business travel
+>##### -__DailyRate__               : int : Daily Rate
+>##### -__Department__              : chr : Which department the empoyee is working in
+>##### -__DistanceFromHome__        : int : How far the employee lives from the work location
+>##### -__Education__               : int : Level of education
+>##### -__EducationField__          : chr : Filed of Education
+>##### -__EmployeeCount__           : int : Employee count (all values are 1)
+>##### -__EmployeeNumber__          : int : Employee Personal number
+>##### -__EnvironmentSatisfaction__ : int : Environment Satisfaction
+>##### -__Gender__                  : chr : Gender
+>##### -__HourlyRate__              : int : Hourly Rate
+>##### -__JobInvolvement__          : int : Level the employee participates in the work
+>##### -__JobLevel__                : int : Job level
+>##### -__JobRole__                 : chr : Role of the employee
+>##### -__JobSatisfaction__         : int : Eployee job satisfaction level
+>##### -__MaritalStatus__           : chr : Marital Status
+>##### -__MonthlyIncome__           : int : Monthly Salary
+>##### -__MonthlyRate__             : int : Monthly Rate includes what employer pays after the worker
+>##### -__NumCompaniesWorked__      : int :  Number of previous companies worked for
+>##### -__Over18__                  : chr : Everybody is over 18 in this dataset
+>##### -__OverTime__                : chr : Employee overtime (yes/no)
+>##### -__PercentSalaryHike__       : int : Salary increase in percentage
+>##### -__PerformanceRating__       : int : Performance Rating
+>##### -__RelationshipSatisfaction__: int : How satisfied with the manager
+>##### -__StandardHours__           : int : All values are 80 hours
+>##### -__StockOptionLevel__        : int : Stock Option Level
+>##### -__TotalWorkingYears__       : int : Total Number of years worked
+>##### -__TrainingTimesLastYear__   : int : Number of trainings taken last year
+>##### -__WorkLifeBalance__         : int : Level of work life balance
+>##### -__YearsAtCompany__          : int : Years working for the current company
+>##### -__YearsInCurrentRole__      : int : Years In Current Role
+>##### -__YearsSinceLastPromotion__ : int : Years Since Last Promotion
+>##### -__YearsWithCurrManager__    : int : Years With Current Manager
+
+$~$
+
+#### Read the data
+```{r,fig.align='center',out.extra='angle=90', message = FALSE}
+#Read the data
+setwd('/Users/ttoth76/Downloads/datasets')
+tm = read.csv(file = 'CaseStudy2-data.csv',header = TRUE, sep = ",")
+# take a sample of 15 from the dataframe
+# sample_n(tm, 5)
+paged_table(tm)
+```
+
+$~$
+
+#### Address the missing values in each column (NA as well as empty strings).
+```{r}
+# Address the missing values in each column (NA as well as empty strings).
+missing_df = as.data.frame(sapply(tm, function(x) sum(is.na(x))))
+colnames(missing_df) = c("variable missing")
+paged_table(missing_df)
+empty_string_df = as.data.frame(sapply(tm, function(x) sum(x == "")))
+colnames(empty_string_df) = c("variable empty")
+paged_table(empty_string_df)
+```
+#### There are no missing values or empty strings in the dataset.
+```{r}
+#set random seed
+set.seed(329)
+```
+$~$
+```{r, warning=FALSE}
+# Function to Identify different characteristics of the data frame 
+# Getting a concise summary of the dataframe: str()
+# Listing the column labels of the dataframe: colnames()
+# Size of the dataset: dim()
+# Checking for missing values isnull()
+# Verify if there is any negative values in the dataset
+dfinfo = function(df_name)
+  {
+  df_summary = str(df_name)
+  df_colnames = colnames(df_name)
+  df_dimensions = dim(df_name)
+  df_na = sapply(df_name, function(x) sum(is.na(x)))
+  df_white = sapply(df_name, function(x) sum(x == ""))
+  df_neg = print(paste("Negative values in the Data Frame:", 
+                       sapply(df_name, function(x) sum(x < 0))))
+  outparam = list(df_summary, df_colnames, df_dimensions, df_na, df_white, df_neg)
+  return (outparam)
+}
+```
+
+```{r, results=FALSE, warning=FALSE}
+# List of nominal categorical variables
+nom_cat = noquote(unlist(tm %>% select(where(is.character)) %>% colnames()))
+#convert the nominal categorical variables to factors
+tm = as.data.frame(unclass(tm), stringsAsFactors = TRUE)
+dfinfo(tm)
+```
+
+### Observations:
+* The dataset is comprised of 870 observations and 36 variables
+* There are numerical and categorical variables in the dataset
+* No missing values or empty strings in the dataset
+* No duplicated 'EmployeeNumber' records
+* 'Attrition' is the dependent variable - no missing value in the dependent variable
+* We need to predict Salary however there is no salary variable in the dataset but MonthlyIncome variable seems to be sufficient for this purpose.
+
+
+#### __Categorical Ordinal variables__: 
+
+- Education, 
+- EnvironmentSatisfaction, 
+- JobInvolvement, 
+- JobLevel,
+- JobSatisfaction, 
+- NumCompaniesWorked, 
+- PerformanceRating, 
+- RelationshipSatisfaction,
+- StockOptionLevel 
+
+$~$
+
+#### Generate summary statistics
+```{r}
+# Generate summary statistics
+summary(tm)
+```
+### Observations:
+- The youngest employee is 18 and the oldest is 60. ~75% of the employees are between 18 and 43 years of age.
+- ~16% of the employees left the company. The attrition ratio is: 140:870. This is a relatively balanced dataset for attrition prediction with ~16% of data containing sample of attrition. 
+- Three level of Business Travels: Non-Travel, Travel Frequently and Travel Rarely. ~71% of the employees travel rarely.
+- The Daily rate ranges between 103 and 1499
+- There are three departments: Human Resources (35), R&D (562) and Sales (273). The most employees are working in R&D department.
+- Employees distance from home ranges between 1 to 29 units. 
+- The median education level of the employees are 3.
+- Most of the employees are educated in Life Sciences followed by Medical. The least number of  field studied is Human Resources.
+- There are more Male than Females in the company.
+- The median hourly rate is 66 while the min is 30 and the maximum is 100.
+- There are 7 job roles. Most employees are Sales Executives followed by Research Scientists.
+- There are three marital categories Divorced, Married, Single. Most of the employees are married, followed by singles.
+- The Monthly income is a right skewed distribution (Mean>Median). The minimum monthly income is 1081 and the maximum is 19999. 
+- The min Monthly rate is 2094 and the max in 26997. The average monthly rate is 14326.
+- Diff between monthly income and monthly rate: the income is what the employee receives the rate includes all payments that the employer pays out after the employee monthly. 
+- In average the employees work for at least 3 companies before.
+- All employees are over 18 years old. We can likely remove or just ignore this variable as there is no variance in it therefore would not make any difference to the model.
+- ~29% of the employees are working overtime.
+- Everybody received salary increase. The min increase was 11% and the max salary increase employee received is 25%. In average ~15% increase is what the employees received.
+- Standard hours are 80 so that likely will be not important for the model.
+- In average the employees have 10 years of work experience.
+- Last year in average employees took training 3 times. There were employees who did not take any training and employees who had 6.
+- Years At Company: This seems to be a right skewed distribution (Mean > Median). This indicates that employees usually stays shorter period of time with the company. However there are employees with 40 years with the company. Could be a unique case, maybe worth while investigating it. Also 75% of the employees are 0 to 10 years with the company so the long term retention of employees maybe a concern.
+-The Years in Current Role ranges between 0 and 18 years. Since the mean > median it seems that most of the employees stay in their role for a shorter period of time.
+- Years Since Last Promotion: In average employees gets promoted every two years but there are employees with large number of years since they were promoted. Worth checking the reasons.
+- Employees in average stay with their managers for ~4 years. 
+- Monthly Income will be our Dependent variable when predicting Salary
+
+$~$
+
+## Uni-variate analysis
+```{r,fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#                               Uni-variate analysis                                #
+#####################################################################################
+# Let's plot the summary statistics
+# Univariate analysis
+num_discrete = c('Education','EnvironmentSatisfaction','JobInvolvement','JobLevel',
+                  'JobSatisfaction','NumCompaniesWorked','PerformanceRating',
+                  'RelationshipSatisfaction','StockOptionLevel', 'EmployeeCount', 'WorkLifeBalance', 'EmployeeNumber', 'ID', 'StandardHours')
+
+num_exclude = c('EmployeeNumber', 'ID', 'StandardHours', 'EmployeeCount')
+
+num_cols = tm %>% select(where(is.numeric)) %>% colnames()
+num_cols_plots = noquote(unlist(num_cols[!( num_cols %in% num_discrete)]))
+num_uni_plots = noquote(unlist(num_cols[!( num_cols %in% num_exclude)]))
+
+nrows = length(num_cols_plots)
+
+for (i in num_uni_plots)
+{
+box_p = tm %>%
+  ggplot(aes(x="", y = .data[[i]])) +
+  geom_boxplot(fill = "sandybrown", color = "black") + 
+  coord_flip() + theme_classic() + xlab("") +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+  ylab(i)
+
+hist_p = tm %>%
+  ggplot() +
+  geom_histogram(aes(x = .data[[i]], y = (..count..)/sum(..count..)),
+                 position = "identity", binwidth = 1, 
+                 fill = "sandybrown", color = "black") +
+  ylab("Relative Frequency") +
+  theme_classic() + xlab(i) + ggtitle(paste(i, "- Univariate Analysis")) + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+egg::ggarrange(hist_p, box_p, heights = 2:1) 
+}
+```
+
+### Observations:
+- Plotted the numerical variables using a histogram and a box plot.
+- The boxplot on top helps identifying extreme values.
+- Most variables are right skewed but based on CLT we can assume normality
+- We can observe some extreme values but after investigation I concluded that these are plausible data points.
+
+$~$
+
+### Categorical data plots
+```{r,fig.align='center',out.extra='angle=90', fig.dim = c(8, 6)}
+#####################################################################################
+#                               Categorical data plots                              #
+#####################################################################################
+
+# drop "over18" variable
+tm = select(tm, -c("Over18"))
+num_ex = c('EmployeeNumber', 'ID', 'StandardHours', "Over18")
+num_var = tm %>% select(where(is.numeric)) %>% colnames()
+num_var_plots = noquote(unlist(num_var[!( num_var %in% num_ex)]))
+cat_cols = tm %>% select(where(is.factor)) %>% colnames()
+# Plot all categorical variables
+for (c in cat_cols)
+{
+  cat_plot = tm %>% ggplot(aes(x= .data[[c]], group = 1)) + 
+    geom_bar(aes(y = ..prop.., fill = factor(..x..)), stat="count") +
+    geom_text(aes( label = scales::percent(..prop..),
+                   y= ..prop.. ), stat= "count", vjust = -.5) +
+    labs(y = "Percent") +
+    scale_y_continuous(labels = scales::percent) + theme(legend.position = "none") +
+    ggtitle(paste(c, "Categorical Analysis")) + 
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  +
+    scale_fill_brewer(palette="Oranges")
+    egg::ggarrange(cat_plot, ncol=2) 
+}
+```
+
+### Observations:
+- 16% of the total workforce has left the company already
+- 71% of the employees rarely travel. 18.2% travels frequently.
+- 65% of the employees are part of the R&D department and 31% is Sales. HR is only 4%.
+- 41% of the employees are life scientist, 31% Medical and 11.5% Marketing.
+- Well balanced gender distribution. 59% Males and 41% Females.
+- Top three Job Roles are Sales Executive, Research Scientist and Lab. Technician.
+- 47% of the employees are married, ~31% Single and 22% divorced.
+- 71% of the employees don't do overtime. The rest does.
+
+$~$
+
+### Staked % plots to better visualize the attrition ratio
+```{r,fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#              Staked % plots to better visualize the attrition ratio               #
+#####################################################################################
+
+stack_plots = c('Education','EnvironmentSatisfaction','JobInvolvement','JobLevel',
+                  'JobSatisfaction','NumCompaniesWorked','PerformanceRating',
+                  'RelationshipSatisfaction','StockOptionLevel', 'EmployeeCount', 'WorkLifeBalance', "BusinessTravel", "Department", "EducationField", "Gender",        
+"JobRole", "MaritalStatus", "OverTime")
+
+for (c in stack_plots)
+{
+crosstab = table(tm[[c]], tm$Attrition)
+cross_prop = round(prop.table(crosstab,1)*100,0)
+tb.df = as.data.frame(cross_prop)
+names(tb.df) <- c("V1", "Attrition", "Frequency")
+stack = tb.df %>% ggplot() + aes(V1, Frequency, fill=Attrition) +
+  geom_bar(stat="identity") +
+  ylab("Relative frequencies") + xlab(c)+
+  geom_text(aes(label=paste0(sprintf("%1.1f", Frequency),"%")),
+            position=position_stack(vjust=0.5)) +
+  ggtitle(paste("Proportion plot for Attrition vs", c)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    scale_fill_brewer(palette="Oranges")
+egg::ggarrange(stack, ncol=2) 
+}
+```
+
+### Observations:
+#### The reason for this relative frequency plot is to reflect the true proportion of the resignations. e.g. Female resignations are 6% of the total number of employees. We may say that this is not very high. It is less then 40% of the total resignations so females tend to leave the company less often then males. This is not exactly the case here though. If we look into the resignations, proportionate to the number of females in the office than we will see that number is 15%. In other words the female resignations are very close to the male resignations and this can only be uncovered if we look into the relative frequency of each group vs attrition.
+
+- Top three resignations are from the lower educational levels relative to its population.
+- Those are resigning the most who are not satisfied with their environment but interesting is that the second largest percent of resignations come from those who are very satisfied with their environment. 
+- Those are resigning the most who are not very involved with their jobs.
+- Lower job level employees tend to resign the most.
+- Lower job satisfaction employees resign the most.
+- Those who have worked for more then 4 companies are resigning the most or those who worked only for 1 company.
+- Male and Female employees are resigning at about the same.
+- Relationship with the manager is influencing resignations a bit but not significantly.
+- Those with stock option 0 and 3 are resigning the most.
+- As the work life balance increasing the resignations are decreasing.
+- The frequency of the travel is influencing the resignations. Those who travel a lot tend to resign the most.
+- Sales and HR departments are leading the number of resignations.
+- Performance rating is not influencing the resignations much.
+- 45% of the Sales Representatives resigned, followed by HR (22%), Lab. tech (20%), Research Scientist (16%)
+- Single employees are resigning the most and divorced the least.
+- Over time is a big factor for resignation. 32% resigned who does overtime and only 10% of those who does not.
+
+$~$
+
+## Bi-variate analysis with dependent variable
+```{r,fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#                     Bi-variate analysis with dependent variable                   #
+#####################################################################################
+
+for (i in num_cols_plots)
+{
+multibox = tm %>%
+  ggplot(aes(x=Attrition, y = .data[[i]])) +
+  geom_boxplot(fill = "sandybrown", color = "black") + 
+  xlab("Attrition") +
+  ylab(i) + stat_summary(fun=mean, geom="point", shape=20, size=7, color="red", fill="red") +
+  ggtitle(paste(i, "vs Attrition bi-variate analysis")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+    scale_fill_brewer(palette = "Oranges")  
+egg::ggarrange(multibox, ncol=2)
+}
+```
+
+### Observations:
+- The median age of those who resigned is lower.
+- Those who resigned are living further away from the office in average.
+- Median monthly income is lower for those who left the company.
+- The median salary increase is the same for those who left the company and stayed. 
+- Those who have less work experience tend to resign more.
+- Training time is not a factor for resignation. 
+- Who worked less for the company tend to resign more.
+- People who stay longer in their current role resign less.
+- Looks like promotion is not a factor for resignation.
+- Those who spent more time with their manager resign less.
+
+$~$
+
+### Bi-variate analysis with JobRole variable
+```{r,fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#                     Bi-variate analysis with JobRole variable                     #
+#####################################################################################
+# Bi-variate analysis with JobRole variable plots  
+for (i in num_uni_plots)
+{
+multibox = tm %>%
+  ggplot(aes(x=JobRole, y = .data[[i]])) +
+  geom_boxplot(fill = "sandybrown", color = "black") + 
+  xlab("Job Role") +
+  ylab(i) + stat_summary(fun=mean, geom="point", shape=20, size=7, color="red", fill="red") +
+  ggtitle(paste(i, "vs Job Role bi-variate analysis")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+    scale_color_brewer(palette = "Oranges")  
+egg::ggarrange(multibox, ncol=2)
+}
+```
+
+### Observations:
+- The youngest team is Sales Representatives based on median age.
+- The oldest is the managers and research directors followed by Healthcare reps based on median age.
+- Managers are living the closest to the office in median distance (<5 miles).
+- Most of the employees are living between 5 and 10 miles. 
+- The median monthly salary are very similar and the lowest for HR, Lab.Tech. Research Scientist and Sales Rep.
+- The median monthly salary are very similar and being the mid tier for Healthcare Reps., Manufacturing dir. and Sales Exec.
+- The highest paid job roles are Managers and Research Directors.
+- The median salary increase is well balanced between the job roles.
+- The median Education level is 3 across the job roles. There is a research director with a low level of education. It is not impossible therefore not considered as an outliar.
+- Environment satisfaction is at median level 3 for all job roles.
+- Median job involvement is 3 for all job roles.
+- The median job level is the lowest for HR, Lab. Tech. Research Scientist and Sales Rep.
+- Healthcare Reps, Manufacturing Dir., Sales Exec are on median job level 2.
+- The highest median job level is 4 for Managers and Research Directors
+- On average all job roles and satisfied equally.
+- The median number of jobs before is the highest for Research directors and Managers. The most inexperienced employees are Sales Reps., Research Scientist and Lab. Techs.
+- The median relationship satisfaction with the manager is equally 3 for all role.
+- The median stock option levels are zero for HR and Sales Reps.
+- The most experience employees are the managers and Research directors in terms of number of years worked.
+- Work life balance is well balanced across job roles.
+- Management stays the longest with the company and Sales Reps stays the least.
+- Managers and directors are in the longest time in their roles.
+- Every role had a promotion in the last two years in median except the Managers.
+- In median, most of the roles are 5 years with the current manager except the managers and directors.
+
+
+$~$
+
+
+## Multi-variate analysis with dependent and JobRole variables 
+```{r,fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#             Multi-variate analysis with dependent and JobRole variables           #
+#####################################################################################
+for (i in num_cols_plots)
+{
+multibox = tm %>%
+  ggplot(aes(x=JobRole, y = .data[[i]])) +
+  geom_boxplot(aes(fill=Attrition)) + 
+  xlab("Job Role") +
+  ylab(i) + 
+  ggtitle(paste(i, "vs Job Role vs Attrition multi-variate analysis")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_fill_brewer(palette = "Oranges")  
+egg::ggarrange(multibox, ncol=2)
+}
+```
+
+### Observations:
+- The median age for employees resigned from Sales Reps. and HR roles are below 30 years. The median age for resignations from other roles are between 30 and 40 years. The managers and directors are above a median age of 40 when it comes to resignation.
+- The median distance from the office for Healthcare reps, HR and Manufacturing director roles who resigned are more than 25 miles. Rest of the resignations happen below a median distance of 10 miles.
+- The median monthly income are in three bucket. Below 5000: HR, Lab. Tech. Research Scientist and Sales Reps. Between 5000 and 10000: Healthcare Reps., Manufacturing Dir., Sales Exec., Above 10000: Managers and Research director.
+- The Research Scientist who resigned had the highest median salary increase. For the rest of the roles we cannot observe significant difference.
+- Manufacturing director who had the least training last year resigned. Rest of the roles resigned at around the same number of training.
+- Managers with the highest median years at the company tend to resign. Most other resignations are below 10 years.
+- Managers with the highest median years in the current role tend to resign.
+- Managers in the current role under the same manager tend to resign more than other job roles.
+
+
+$~$
+
+
+### Employee profile who left the company
+```{r,fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#                         Employee profile who left the company                     #
+#####################################################################################
+# Employee profile who left the company (filter attrition = YES)
+# Job Role profile by Attrition
+tmYES = tm[tm$Attrition == 'Yes',]
+# Bi-variate analysis with JobRole variable plots  
+for (i in num_cols_plots)
+{
+multibox = tmYES %>%
+  ggplot(aes(x=JobRole, y = .data[[i]])) +
+  geom_boxplot(fill = "sandybrown", color = "black") +  
+  xlab("Job Role") +
+  ylab(i) + stat_summary(fun=mean, geom="point", shape=20, size=7, color="red", fill="red") +
+  ggtitle(paste(i, "vs Job Role for those who resigned")) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+    scale_color_brewer(palette = "Oranges")  
+egg::ggarrange(multibox, ncol=2)
+}
+
+```
+
+### Observations:
+- Management resigns at higher age (>40), other job roles are below 40.
+- Those who resigned lived in a median distance of 20 miles or less from the company.
+- Most job roles who resigned had a median monthly salary below 10000 except managers and Research directors.
+- Even though research scientists had a salary increase > 15% they resigned.
+- Resignations happens for those who has less then a median 25 year of experience.
+- Most resignation are with a median years with the company of less than 10 years. 
+- The median years of last promotion for those who resigned is less than 3 years.
+
+
+$~$
+
+
+### Data Validation
+```{r total_uniq_style, prod_co, results=FALSE}
+# Data Validation
+a=0; b=0; c=0; d=0;
+ifelse (tm$TotalWorkingYears < tm$YearsAtCompany, (a=a+1), ifelse (tm$TotalWorkingYears > tm$YearsAtCompany,a, a))
+ifelse (tm$YearInCurrentRole > tm$YearsAtCompany, (b=b+1), ifelse (tm$YearInCurrentRole < tm$YearsAtCompany, b, b))
+ifelse (tm$YearsSinceLastPromotion > tm$YearsAtCompany, (c=c+1), ifelse (tm$YearsSinceLastPromotion < tm$YearsAtCompany, c, c))
+ifelse (tm$YearsWithCurrManager > tm$YearsAtCompany, (d=d+1), ifelse (tm$YearsWithCurrManager < tm$YearsAtCompany, d, d))
+```
+```{r}
+if ((a>0) | (b>0) | (c>0) | (d>0))
+{
+  cat("There is a data error")
+  }else
+{
+    cat("No data error can be detected")
+  }
+```
+
+#### Veified if there is any unlikely scenario as follows. These would be incorrect records:
+
+- YearAtCompany < YearInCurrentRole 
+- TotalWorkingYears < YearAtCompany
+- YearAtCompany < YearsSinceLastPromotion
+- YearAtCompany < YearsWithCurrentManager
+
+$~$
+
+### Zoomed-in Correlation Matrix
+```{r fig.dim = c(8, 6)}
+#####################################################################################
+#                          Zoomed-in Correlation Matrix                             #
+#####################################################################################
+
+# Filter for data tob be included
+num_incl = c('PerformanceRating', 'PercentSalaryHike', 
+             'YearsInCurrentRole', 'YearsSinceLastPromotion',
+             'YearsAtCompany','JobLevel',
+             'TotalWorkingYears','MonthlyIncome',
+             'Age')
+
+tmcorr = tm[,num_incl]
+corrplot(cor(tmcorr), method = 'square', order = 'AOE', addCoef.col = 'black', 
+         cl.pos = 'n', col = COL2('BrBG'))
+```
+
+### Observations:
+- Due to the large number of explanatory variables I zoomed in on the correlation matrix for visualization purposes.
+- We can observe some strong positive correlation between variables these will be important when building the model to avoid multicollinearity. 
+
+$~$
+
+## Hypothesis Test for Feature Importance  
+```{r}
+#####################################################################################
+#                      Hypothesis Test for Feature Importance                       #
+#####################################################################################
+var_exc = c('ID', 'EmployeeCount', 'EmployeeNumber', 'StandardHours', 'Over18')
+num_tm_var = tm %>% select(where(is.numeric)) %>% colnames()
+t_test_data = noquote(unlist(num_tm_var[!( num_tm_var %in% var_exc)]))
+
+for (i in t_test_data)
+{
+varSel = t.test(tm[[i]] ~ Attrition, data = tm)
+p = varSel$p.value
+  if (p > 0.05)
+  {
+  print(paste("EXCLUDE:",i,"with p-value:", p))
+    }else{
+    print(paste("INCLUDE:",i,"with p-value:", p))}
+}
+
+```
+### Observations:
+- Assumptions for a t-test has been plotted under the Uni-variate analysis. We can see that the distributions don't look normal but we have enough samples so we can apply CLT therefore this is not a concern.
+- The standard deviations are not equal but t-test would be robust agiants it if the sample sizes are equal. Since the Attrition and No Attrition sample sizes are not equal we cannot assume that the standard deviations are equal. Due to this violation I ran Welch's two sample t-test.
+- We assume independence. 
+H0:μ_Attrition=μ_Not_Attrition
+- Ha:μ_Attrition≠μ_Not_Attrition
+- The test output above shows (incl. p-value) which variable should be included and excluded to the model.
+- Based on the hypothesis test if the p-value > 0.05 then it means that there is not enough evidence to suggest that the "attrition" and "no attrition" groups are different therefore we should not include those variables into the model.
+
+$~$
+
+## Model Building
+Defining the variables to include into the model based on the variable selection. On top of that I have manually added and removed categorical variables based on impact to the model performance.
+```{r}
+#####################################################################################
+#                                  Model Preparation                                #
+#####################################################################################
+# Defining the variables to include into the model based on the variable selection. On top of that I have manually added and removed categorical variables based on impact to the model performance.
+
+incl_KNN= c('Attrition', 'Age', 'DistanceFromHome',  'JobInvolvement','JobLevel', 'EnvironmentSatisfaction',  'JobSatisfaction', 'MonthlyIncome', 'StockOptionLevel',  'TotalWorkingYears' ,'WorkLifeBalance', 'YearsAtCompany', 'YearsInCurrentRole', 'YearsWithCurrManager', 'OverTime', 'EducationField')
+
+incl_NB = c('Attrition', 'Age', 'DistanceFromHome',  'JobInvolvement','JobLevel', 'EnvironmentSatisfaction',  'JobSatisfaction', 'MonthlyIncome', 'StockOptionLevel',  'TotalWorkingYears' ,'WorkLifeBalance', 'YearsAtCompany', 'YearsInCurrentRole', 'YearsWithCurrManager', 'OverTime', 'EducationField')
+
+var_exc = c('ID', 'EmployeeCount', 'EmployeeNumber', 'StandardHours', 'Over18')
+num_tm_var = tm %>% select(where(is.numeric)) %>% colnames()
+num_mod_vars = noquote(unlist(num_tm_var[!( num_tm_var %in% var_exc)]))
+
+# 5-fold cross validation
+cv <- trainControl(
+  method = "cv", 
+  number = 5,
+  savePredictions = TRUE
+)
+```
+
+
+$~$
+
+### Model building  - KNN
+```{r,fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#                                  Model building  - KNN                            #
+#####################################################################################
+set.seed(411)
+KNN_tm = tm[,incl_KNN]
+KNN_tm_all_num = KNN_tm %>% select(where(is.numeric))
+
+caret::nearZeroVar(KNN_tm_all_num, saveMetrics = TRUE) %>% 
+  tibble::rownames_to_column() %>% 
+  filter(nzv)
+cat("No variable with zero variance in the selected list of variables.") 
+
+# Scale the numerical variables as KNN is sensitive to that
+KNN_tm_scale = KNN_tm %>% mutate_if(is.numeric, scale)
+
+# 70/30 split of the data set to train the models:
+TRAIN_KNN_tm_scale = sample(1:dim(KNN_tm_scale)[1], round(0.7*dim(KNN_tm_scale)[1]))
+train = KNN_tm_scale[TRAIN_KNN_tm_scale,]
+test = KNN_tm_scale[-TRAIN_KNN_tm_scale,]
+train$Attrition = as.factor(train$Attrition)
+test$Attrition = as.factor(test$Attrition)
+
+# Search for optimal k
+k_grid <- expand.grid(k = seq(3, 25, by = 2))
+
+# Model Training
+KNNM = train(
+  Attrition ~.,
+  data = train,
+  method = "knn",
+  tuneGrid = k_grid,
+  trControl = cv
+  )
+
+# Predicting
+prediction_train = predict(KNNM, train)
+prediction_test = predict(KNNM, test)
+```
+
+### KNN performance on training set
+```{r}
+# Scoring
+confusionMatrix(train$Attrition, prediction_train, positive = 'Yes')
+```
+
+### KNN performance on validation set
+```{r}
+confusionMatrix(test$Attrition, prediction_test, positive = 'Yes')
+```
+
+### Visualize 'k' and the most important features
+```{r}
+# Visualize 'k' and the most important features
+ggplot(KNNM) + ggtitle("Optimal k value for the highest accuracy") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+KNNvarImp = varImp(KNNM)
+plot(KNNvarImp, top = 5, main='Top 5 reason of resignation (KNN)')
+```
+
+## Observations:
+- I split the data to train and test (used as validation) in a 70-30 percent.
+- Created a grid for finding the optimal k-value.
+- Scaled the numerical variables as KNN is sensitive to non-normalized data
+- Used a k-fold cross validation to improve the training of the model.
+- As the result shows this model meets the 60% requirements for Sensitivity and Specificity.
+- Identified the top 5 most important variables using feature importance function in caret package. This result is backed by and matching with the result from the EDA above.
+
+$~$
+
+### Model building  - naive Bayes
+```{r,fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#                          Model building  - naive Bayes                            #
+#####################################################################################
+set.seed(411)
+NB_tm = tm[,incl_NB]
+
+# 70/30 split of the data set to train the models:
+TRAIN_NB = sample(1:dim(NB_tm)[1], round(0.7*dim(NB_tm)[1]))
+trainNB = NB_tm[TRAIN_NB,]
+testNB = NB_tm[-TRAIN_NB,]
+trainNB$Attrition = as.factor(trainNB$Attrition)
+testNB$Attrition = as.factor(testNB$Attrition)
+
+# Model Training
+NB = train(
+  Attrition ~.,
+  data = trainNB,
+  method = "naive_bayes",
+  usepoisson = TRUE,
+  trControl = cv)
+
+# Predicting
+prediction_train = predict(NB, trainNB)
+prediction_test = predict(NB, testNB)
+```
+
+$~$
+
+### Naive Bayes performance on training set
+```{r}
+# Scoring
+confusionMatrix(trainNB$Attrition, prediction_train, positive = 'Yes')
+```
+
+$~$
+
+### Naive Bayes performance on validation set
+```{r}
+confusionMatrix(testNB$Attrition, prediction_test, positive = 'Yes')
+```
+
+$~$
+
+### Visualize Naive Bayes most important features
+```{r}
+# Visualize the most important features
+NBvarImp = varImp(NB)
+plot(NBvarImp, top = 5, main='Top 5 reason of resignation (Naive Bayes)')
+```
+
+## Observations:
+- I split the data to train and test (used as validation) in a 70-30 percent.
+- Used a k-fold cross validation to improve the training of the model.
+- As the result shows this model meets the 60% requirements for Sensitivity and Specificity.
+- Identified the top 5 most important variables using feature importance function in caret package. This result is backed by and matching with the result from the EDA above.
+
+### Model comparision:
+- Both models are performing well however the Naive Bayes model outperforms the KNN model on the validation data set therefore I would recommend using this Naive Bayes model for predicting attrition.
+
+$~$
+
+### Model building  - Linear Regression
+Predicting Salary for employees. It only makes sense for those employees who are still with the company so I have removed the employees who have left the company from the dataset.
+Our dependent variable will be MonthlyIncome. We will predict Monthly Salary with a multiple linear regression model.
+```{r}
+#####################################################################################
+#                         Model building  - Linear Regression                       #
+#####################################################################################
+# Predicting Salary for employees. It only makes sense for those employees who are still with the company so I have removed the employees who have left the company from the dataset.
+# Our dependent variable will be MonthlyIncome. We will predict Monthly Salary with a multiple linear regression model.
+
+# Identify numeric variables which are linearly related to MonyhlyIncome
+MLR_num_tm = tm[tm$Attrition=="No", num_mod_vars]
+```
+
+### Linear - Linear  data
+```{r,fig.align='center',out.extra='angle=90'}
+# Linear - Linear Model
+pairs(MonthlyIncome~Age+DailyRate+DistanceFromHome+Education, data=MLR_num_tm, col="green")
+pairs(MonthlyIncome~EnvironmentSatisfaction+HourlyRate+JobInvolvement+JobLevel, data=MLR_num_tm, col="green")
+pairs(MonthlyIncome~JobSatisfaction+MonthlyRate+NumCompaniesWorked+PercentSalaryHike, data=MLR_num_tm, col="green")
+pairs(MonthlyIncome~PerformanceRating+RelationshipSatisfaction+StockOptionLevel+TotalWorkingYears, data=MLR_num_tm, col="green")
+pairs(MonthlyIncome~TrainingTimesLastYear+WorkLifeBalance+YearsAtCompany+YearsInCurrentRole, data=MLR_num_tm, col="green")
+pairs(MonthlyIncome~YearsSinceLastPromotion+YearsWithCurrManager, data=MLR_num_tm, col="green")
+```
+
+$~$
+
+### Log - Linear Transformation
+```{r,fig.align='center',out.extra='angle=90'}
+# Log - Linear Model
+LOG_num_tm = MLR_num_tm
+LOG_num_tm$MonthlyIncome = log(MLR_num_tm$MonthlyIncome) 
+pairs(MonthlyIncome~Age+DailyRate+DistanceFromHome+Education, data=MLR_num_tm, col="red")
+pairs(MonthlyIncome~EnvironmentSatisfaction+HourlyRate+JobInvolvement+JobLevel, data=LOG_num_tm, col="red")
+pairs(MonthlyIncome~JobSatisfaction+MonthlyRate+NumCompaniesWorked+PercentSalaryHike, data=LOG_num_tm, col="red")
+pairs(MonthlyIncome~PerformanceRating+RelationshipSatisfaction+StockOptionLevel+TotalWorkingYears, data=LOG_num_tm, col="red")
+pairs(MonthlyIncome~TrainingTimesLastYear+WorkLifeBalance+YearsAtCompany+YearsInCurrentRole, data=LOG_num_tm, col="red")
+pairs(MonthlyIncome~YearsSinceLastPromotion+YearsWithCurrManager, data=MLR_num_tm, col="red")
+```
+
+$~$
+
+### Log - Log Transformation
+```{r,fig.align='center',out.extra='angle=90'}
+# Log - Log Model
+# Just add 1 to values which are 0.
+LOG_num_tm = MLR_num_tm
+MLR_num_tm[MLR_num_tm==0] = 1
+LOG_num_tm = log(MLR_num_tm)
+
+pairs(MonthlyIncome~Age+DailyRate+DistanceFromHome+Education, data=MLR_num_tm, col="blue")
+pairs(MonthlyIncome~EnvironmentSatisfaction+HourlyRate+JobInvolvement+JobLevel, data=LOG_num_tm, col="blue")
+pairs(MonthlyIncome~JobSatisfaction+MonthlyRate+NumCompaniesWorked+PercentSalaryHike, data=LOG_num_tm, col="blue")
+pairs(MonthlyIncome~PerformanceRating+RelationshipSatisfaction+StockOptionLevel+TotalWorkingYears, data=LOG_num_tm, col="blue")
+pairs(MonthlyIncome~TrainingTimesLastYear+WorkLifeBalance+YearsAtCompany+YearsInCurrentRole, data=LOG_num_tm, col="blue")
+pairs(MonthlyIncome~YearsSinceLastPromotion+YearsWithCurrManager, data=MLR_num_tm, col="blue")
+
+# Based on the pair plots we can observe linear relationship between MonthlyIncome and Age, JobLevel, TotalWorkingYears, YearAtCompany
+```
+
+## Observation:
+Based on the pair plots the following variables have linear relationship with MonthlyIncome: 
+
+- Age, 
+- JobLevel, 
+- TotalWorkingYears, 
+- YearAtCompany
+
+therefore I will include these continuous variables to the Multiple Linear Regression model.
+
+### Check VIF for the selected numerical variables
+```{r,fig.align='center',out.extra='angle=90'}
+# Check VIF for the selected variables
+# Let's fit a temporary model
+MLR = lm(MonthlyIncome ~ Age+JobLevel+TotalWorkingYears+YearsAtCompany, data = MLR_num_tm)
+
+# sore the temp model
+summary(MLR)
+```
+
+### Visualize VIF
+```{r,fig.align='center',out.extra='angle=90', fig.dim = c(12, 10)}
+MLR_VIF = vif(MLR)
+barplot(MLR_VIF, main = 'VIF Values', horiz = TRUE, col="blue")
+```
+
+#### There is no multicollinierity in the model (VIF < 10) but based on the p-values Age is not significant (its slope is not different than zero) so we can remove it from the model. 
+
+$~$
+
+### Let's proceed with building and training the Multiple Linear Regression Model.
+```{r,fig.align='center',out.extra='angle=90'}
+set.seed(411)
+# 70/30 split of the data set to train the models:
+TRAIN_MLR = sample(1:dim(MLR_num_tm)[1], round(0.7*dim(MLR_num_tm)[1]))
+trainMLR = MLR_num_tm[TRAIN_MLR,]
+testMLR = MLR_num_tm[-TRAIN_MLR,]
+
+# Model Training
+MLRT = train(
+  MonthlyIncome ~ JobLevel+TotalWorkingYears+YearsAtCompany,
+  data = trainMLR,
+  method = "lm",
+  trControl = cv)
+
+# Predicting
+train_pred = predict(MLRT, trainMLR)
+valid_pred = predict(MLRT, testMLR)
+
+# Scoring the final model on Training and Validation set
+summary(MLRT$finalModel)
+residuals = resid(MLRT$finalModel)
+postResample(pred = train_pred, obs = trainMLR$MonthlyIncome)
+postResample(pred = valid_pred, obs = testMLR$MonthlyIncome)
+```
+
+### Checking Multiple Liner Regression model assumptions
+```{r,fig.align='center',out.extra='angle=90'}
+# Checking model assumptions
+fit = lm(MonthlyIncome ~ JobLevel+TotalWorkingYears+YearsAtCompany, trainMLR)
+confint(fit)
+hist(residuals, main = "Histogram of Residuals")
+plot(residuals, main = "Residuals plot") 
+abline(h=0, col="blue")
+plot(fit, which = 2)
+plot(fit, which = 4)
+```
+
+## Observations:
+- First I have verified which variables are linearly correlated with the response variable. 
+- I log transformed the data and verified if it increases the linear relationship with our dependent variable.
+- Fit a temporary model then verified VIF for the variables included. There was no multicollinearity observed.
+- Removed Age from the model as its p-value suggested that it is no significant for the model performance.
+- Added categorical variable to the model (trial and error method since we did not have a large number of categorical variables).
+- I split the data to train and test (used as validation) in a 70-30 percent.
+- Used a k-fold cross validation to improve the training of the model.
+- Finally verified the model assumptions and conculded that all are met.
+
+$~$
+
+## Recommendations:
+1. I suggest to use the Naive Bayes model to predict attrition as the model is performing well.
+2. Pay attention to employees working overtime as they tend to resign more frequently.
+3. Implement a program that will encourage younger employees to stay with the company as people with less then 10 years of work experience tend to leave the company more often.
+4. Salary in many cases is an important factor for attrition. Make sure that the salary of the employees stays competitive, even extending the Stock options will help.
+5. I also recommend using the Regression model for predicting monthly salary. This could help the company to retain employees and stay competitive on the job market by better planning salaries. 
