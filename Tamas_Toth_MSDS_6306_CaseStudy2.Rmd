@@ -1,5 +1,5 @@
 ---
-title: "CaseStudy2DDS"
+title: "Attrrition Analysis and Prediction CaseStudy2 DDS"
 author: "Tamas Toth"
 date: '2022-04-16'
 output: 
