@@ -13,7 +13,7 @@
 
 <meta name="date" content="2022-04-16" />
 
-<title>Attrrition Analysis and Prediction CaseStudy2 DDS</title>
+<title>Attrition analysis and prediction (CaseStudy2)</title>
 
 <script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -266,8 +266,8 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Attrrition Analysis and Prediction
-CaseStudy2 DDS</h1>
+<h1 class="title toc-ignore">Attrition analysis and prediction
+(CaseStudy2)</h1>
 <h4 class="author">Tamas Toth</h4>
 <h4 class="date">2022-04-16</h4>
 
@@ -275,6 +275,14 @@ CaseStudy2 DDS</h1>
 
 
 <p><span class="math inline">\(~\)</span></p>
+<div id="youtube-video" class="section level4">
+<h4>YouTube video</h4>
+<h2>
+<a href="https://youtu.be/V3QS8_9L4ws">Please click here for the Youtube
+video presentation</a>
+</h2>
+<p><span class="math inline">\(~\)</span></p>
+</div>
 <div id="loading-the-necessary-r-libraries-for-the-analysis"
 class="section level4">
 <h4>Loading the necessary R libraries for the analysis</h4>
@@ -1089,6 +1097,32 @@ incorrect records:</h4>
 <p><span class="math inline">\(~\)</span></p>
 </div>
 </div>
+<div id="full-correlation-matrix-for-linear-regression-monthlyincome"
+class="section level3">
+<h3>Full Correlation Matrix for Linear Regression (MonthlyIncome)</h3>
+<pre class="r"><code>#####################################################################################
+#      Full Correlation Matrix for Linear Regression (MonthlyIncome)                #
+#####################################################################################
+
+# Filter for data to be included
+num_exclude = c(&#39;EmployeeNumber&#39;, &#39;ID&#39;, &#39;StandardHours&#39;, &#39;EmployeeCount&#39;)
+num_cols = tm %&gt;% select(where(is.numeric)) %&gt;% colnames()
+num_full_corr = noquote(unlist(num_cols[!( num_cols %in% num_exclude)]))
+
+tmcorr = tm[,num_full_corr]
+corrplot(cor(tmcorr), method = &#39;square&#39;, order = &#39;AOE&#39;, addCoef.col = &#39;black&#39;, 
+         cl.pos = &#39;n&#39;, col = COL2(&#39;BrBG&#39;))</code></pre>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-17-1.png" width="1344" angle=90 style="display: block; margin: auto;" /></p>
+</div>
+<div id="observations-9" class="section level3">
+<h3>Observations:</h3>
+<ul>
+<li>The MonthIncome variable is positively correlated with
+YearAtCompany, TotalWorkingYears, JobLevel and Age. The rest of the
+correlations are not significant.</li>
+</ul>
+<p><span class="math inline">\(~\)</span></p>
+</div>
 <div id="zoomed-in-correlation-matrix" class="section level3">
 <h3>Zoomed-in Correlation Matrix</h3>
 <pre class="r"><code>#####################################################################################
@@ -1105,9 +1139,9 @@ num_incl = c(&#39;PerformanceRating&#39;, &#39;PercentSalaryHike&#39;,
 tmcorr = tm[,num_incl]
 corrplot(cor(tmcorr), method = &#39;square&#39;, order = &#39;AOE&#39;, addCoef.col = &#39;black&#39;, 
          cl.pos = &#39;n&#39;, col = COL2(&#39;BrBG&#39;))</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-17-1.png" width="768" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-18-1.png" width="768" angle=90 style="display: block; margin: auto;" /></p>
 </div>
-<div id="observations-9" class="section level3">
+<div id="observations-10" class="section level3">
 <h3>Observations:</h3>
 <ul>
 <li>Due to the large number of explanatory variables I zoomed in on the
@@ -1161,7 +1195,7 @@ p = varSel$p.value
 ## [1] &quot;INCLUDE: YearsInCurrentRole with p-value: 0.00000152215212530173&quot;
 ## [1] &quot;EXCLUDE: YearsSinceLastPromotion with p-value: 0.898316528364275&quot;
 ## [1] &quot;INCLUDE: YearsWithCurrManager with p-value: 0.00000508422927849574&quot;</code></pre>
-<div id="observations-10" class="section level3">
+<div id="observations-11" class="section level3">
 <h3>Observations:</h3>
 <ul>
 <li>Assumptions for a t-test has been plotted under the Uni-variate
@@ -1173,7 +1207,8 @@ agiants it if the sample sizes are equal. Since the Attrition and No
 Attrition sample sizes are not equal we cannot assume that the standard
 deviations are equal. Due to this violation I ran Welch’s two sample
 t-test.</li>
-<li>We assume independence. H0:μ_Attrition=μ_Not_Attrition</li>
+<li>We assume independence.</li>
+<li>H0:μ_Attrition=μ_Not_Attrition</li>
 <li>Ha:μ_Attrition≠μ_Not_Attrition</li>
 <li>The test output above shows (incl. p-value) which variable should be
 included and excluded to the model.</li>
@@ -1321,13 +1356,13 @@ class="section level3">
 <pre class="r"><code># Visualize &#39;k&#39; and the most important features
 ggplot(KNNM) + ggtitle(&quot;Optimal k value for the highest accuracy&quot;) +
   theme(plot.title = element_text(hjust = 0.5))</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-24-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>KNNvarImp = varImp(KNNM)
 plot(KNNvarImp, top = 5, main=&#39;Top 5 reason of resignation (KNN)&#39;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-23-2.png" width="672" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-24-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 </div>
 </div>
-<div id="observations-11" class="section level2">
+<div id="observations-12" class="section level2">
 <h2>Observations:</h2>
 <ul>
 <li>I split the data to train and test (used as validation) in a 70-30
@@ -1445,10 +1480,10 @@ class="section level3">
 <pre class="r"><code># Visualize the most important features
 NBvarImp = varImp(NB)
 plot(NBvarImp, top = 5, main=&#39;Top 5 reason of resignation (Naive Bayes)&#39;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-28-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 </div>
 </div>
-<div id="observations-12" class="section level2">
+<div id="observations-13" class="section level2">
 <h2>Observations:</h2>
 <ul>
 <li>I split the data to train and test (used as validation) in a 70-30
@@ -1490,17 +1525,17 @@ MLR_num_tm = tm[tm$Attrition==&quot;No&quot;, num_mod_vars]</code></pre>
 <h3>Linear - Linear data</h3>
 <pre class="r"><code># Linear - Linear Model
 pairs(MonthlyIncome~Age+DailyRate+DistanceFromHome+Education, data=MLR_num_tm, col=&quot;green&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-29-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~EnvironmentSatisfaction+HourlyRate+JobInvolvement+JobLevel, data=MLR_num_tm, col=&quot;green&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-29-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~JobSatisfaction+MonthlyRate+NumCompaniesWorked+PercentSalaryHike, data=MLR_num_tm, col=&quot;green&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-29-3.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-3.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~PerformanceRating+RelationshipSatisfaction+StockOptionLevel+TotalWorkingYears, data=MLR_num_tm, col=&quot;green&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-29-4.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-4.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~TrainingTimesLastYear+WorkLifeBalance+YearsAtCompany+YearsInCurrentRole, data=MLR_num_tm, col=&quot;green&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-29-5.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-5.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~YearsSinceLastPromotion+YearsWithCurrManager, data=MLR_num_tm, col=&quot;green&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-29-6.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-6.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <p><span class="math inline">\(~\)</span></p>
 </div>
 <div id="log---linear-transformation" class="section level3">
@@ -1509,17 +1544,17 @@ pairs(MonthlyIncome~Age+DailyRate+DistanceFromHome+Education, data=MLR_num_tm, c
 LOG_num_tm = MLR_num_tm
 LOG_num_tm$MonthlyIncome = log(MLR_num_tm$MonthlyIncome) 
 pairs(MonthlyIncome~Age+DailyRate+DistanceFromHome+Education, data=MLR_num_tm, col=&quot;red&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~EnvironmentSatisfaction+HourlyRate+JobInvolvement+JobLevel, data=LOG_num_tm, col=&quot;red&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~JobSatisfaction+MonthlyRate+NumCompaniesWorked+PercentSalaryHike, data=LOG_num_tm, col=&quot;red&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-3.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-3.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~PerformanceRating+RelationshipSatisfaction+StockOptionLevel+TotalWorkingYears, data=LOG_num_tm, col=&quot;red&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-4.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-4.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~TrainingTimesLastYear+WorkLifeBalance+YearsAtCompany+YearsInCurrentRole, data=LOG_num_tm, col=&quot;red&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-5.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-5.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~YearsSinceLastPromotion+YearsWithCurrManager, data=MLR_num_tm, col=&quot;red&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-30-6.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-6.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <p><span class="math inline">\(~\)</span></p>
 </div>
 <div id="log---log-transformation" class="section level3">
@@ -1531,17 +1566,17 @@ MLR_num_tm[MLR_num_tm==0] = 1
 LOG_num_tm = log(MLR_num_tm)
 
 pairs(MonthlyIncome~Age+DailyRate+DistanceFromHome+Education, data=MLR_num_tm, col=&quot;blue&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-32-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~EnvironmentSatisfaction+HourlyRate+JobInvolvement+JobLevel, data=LOG_num_tm, col=&quot;blue&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-32-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~JobSatisfaction+MonthlyRate+NumCompaniesWorked+PercentSalaryHike, data=LOG_num_tm, col=&quot;blue&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-3.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-32-3.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~PerformanceRating+RelationshipSatisfaction+StockOptionLevel+TotalWorkingYears, data=LOG_num_tm, col=&quot;blue&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-4.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-32-4.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~TrainingTimesLastYear+WorkLifeBalance+YearsAtCompany+YearsInCurrentRole, data=LOG_num_tm, col=&quot;blue&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-5.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-32-5.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>pairs(MonthlyIncome~YearsSinceLastPromotion+YearsWithCurrManager, data=MLR_num_tm, col=&quot;blue&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-31-6.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-32-6.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Based on the pair plots we can observe linear relationship between MonthlyIncome and Age, JobLevel, TotalWorkingYears, YearAtCompany</code></pre>
 </div>
 </div>
@@ -1593,7 +1628,7 @@ summary(MLR)</code></pre>
 <h3>Visualize VIF</h3>
 <pre class="r"><code>MLR_VIF = vif(MLR)
 barplot(MLR_VIF, main = &#39;VIF Values&#39;, horiz = TRUE, col=&quot;blue&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-33-1.png" width="1152" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-34-1.png" width="1152" angle=90 style="display: block; margin: auto;" /></p>
 <div
 id="there-is-no-multicollinierity-in-the-model-vif-10-but-based-on-the-p-values-age-is-not-significant-its-slope-is-not-different-than-zero-so-we-can-remove-it-from-the-model."
 class="section level4">
@@ -1667,17 +1702,17 @@ confint(fit)</code></pre>
 ## TotalWorkingYears    51.67   108.653
 ## YearsAtCompany      -54.15    -1.351</code></pre>
 <pre class="r"><code>hist(residuals, main = &quot;Histogram of Residuals&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-35-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-36-1.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>plot(residuals, main = &quot;Residuals plot&quot;) 
 abline(h=0, col=&quot;blue&quot;)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-35-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-36-2.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>plot(fit, which = 2)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-35-3.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-36-3.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 <pre class="r"><code>plot(fit, which = 4)</code></pre>
-<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-35-4.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
+<p><img src="Tamas_Toth_MSDS_6306_CaseStudy2_files/figure-html/unnamed-chunk-36-4.png" width="672" angle=90 style="display: block; margin: auto;" /></p>
 </div>
 </div>
-<div id="observations-13" class="section level2">
+<div id="observations-14" class="section level2">
 <h2>Observations:</h2>
 <ul>
 <li>First I have verified which variables are linearly correlated with
@@ -1694,7 +1729,7 @@ since we did not have a large number of categorical variables).</li>
 percent.</li>
 <li>Used a k-fold cross validation to improve the training of the
 model.</li>
-<li>Finally verified the model assumptions and conculded that all are
+<li>Finally verified the model assumptions and concluded that all are
 met.</li>
 </ul>
 <p><span class="math inline">\(~\)</span></p>
@@ -1716,6 +1751,57 @@ Stock options will help.</li>
 salary. This could help the company to retain employees and stay
 competitive on the job market by better planning salaries.</li>
 </ol>
+<p><span class="math inline">\(~\)</span></p>
+</div>
+<div id="executive-summary" class="section level2">
+<h2>Executive Summary:</h2>
+<p>Conducted an analysis for the DDSAnalytics company to prove the value
+of Data Science and machine learning in the space of talent management.
+The analysis included 870 employees of the company with 36 attributes of
+each. The analysis discovered that - There are 7 job roles. - Overall
+attrition is 16%. - ~75% of the employees are between 18 and 43 years of
+age. - There are more Male than Females in the company. - The minimum
+monthly income has a wide range (between 1000 and 19999 dollars) -
+Everybody received salary increase. The min increase was 11% and the max
+salary increase employee received is 25%. - Last year in average
+employees took training 3 times. - Employees usually stays shorter
+period with the company. - In average employees gets promoted every two
+years. - Employees in average stay with their managers for ~4 years. -
+The median education level of the employees are 3.</p>
+<p>Profiled the different Job Roles:</p>
+<p>The youngest team is Sales Representatives based on median age. The
+oldest is the managers and research directors followed by Healthcare
+reps based on median age. Managers are living the closest to the office
+in median distance (&lt;5 miles). Most of the employees are living
+between 5 and 10 miles. The median monthly salary are very similar and
+the lowest for HR, Lab.Tech. Research Scientist and Sales Rep. The
+median monthly salary are very similar and being the mid tier for
+Healthcare Reps., Manufacturing dir. and Sales Exec. The highest paid
+job roles are Managers and Research Directors. The median salary
+increase is well balanced between the job roles. The median Education
+level is 3 across the job roles. There is a research director with a low
+level of education. It is not impossible therefore not considered as an
+outliar. Environment satisfaction is at median level 3 for all job
+roles. Median job involvement is 3 for all job roles. The median job
+level is the lowest for HR, Lab. Tech. Research Scientist and Sales Rep.
+Healthcare Reps, Manufacturing Dir., Sales Exec are on median job level
+2. The highest median job level is 4 for Managers and Research Directors
+On average all job roles and satisfied equally. The median number of
+jobs before is the highest for Research directors and Managers. The most
+inexperienced employees are Sales Reps., Research Scientist and Lab.
+Techs. The median relationship satisfaction with the manager is equally
+3 for all role. The median stock option levels are zero for HR and Sales
+Reps. The most experience employees are the managers and Research
+directors in terms of number of years worked. Work life balance is well
+balanced across job roles. Management stays the longest with the company
+and Sales Reps stays the least. Managers and directors are in the
+longest time in their roles. Every role had a promotion in the last two
+years in median except the Managers. In median, most of the roles are 5
+years with the current manager except the managers and directors.</p>
+<p>Concluded that the top 3 factors for attrition is OverTimem Total
+WorkingYears and Monthly income. Based on these observations a
+recommendation was provided. Predcited Monthly Salary for the employees
+to provide additional competetive advantage for the company.</p>
 </div>
 
 

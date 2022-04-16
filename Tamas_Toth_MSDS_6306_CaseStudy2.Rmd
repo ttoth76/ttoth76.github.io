@@ -1,5 +1,5 @@
 ---
-title: "Attrrition Analysis and Prediction CaseStudy2 DDS"
+title: "Attrition analysis and prediction (CaseStudy2)"
 author: "Tamas Toth"
 date: '2022-04-16'
 output: 
@@ -13,6 +13,13 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+$~$
+
+#### YouTube video
+<h2>
+<a href="https://youtu.be/V3QS8_9L4ws">Please click here for the Youtube video presentation</a>
+</h2>
+
 $~$
 
 #### Loading the necessary R libraries for the analysis
@@ -550,8 +557,30 @@ if ((a>0) | (b>0) | (c>0) | (d>0))
 
 $~$
 
+### Full Correlation Matrix for Linear Regression (MonthlyIncome)
+```{r fig.dim = c(14, 12), fig.align='center',out.extra='angle=90'}
+#####################################################################################
+#      Full Correlation Matrix for Linear Regression (MonthlyIncome)                #
+#####################################################################################
+
+# Filter for data to be included
+num_exclude = c('EmployeeNumber', 'ID', 'StandardHours', 'EmployeeCount')
+num_cols = tm %>% select(where(is.numeric)) %>% colnames()
+num_full_corr = noquote(unlist(num_cols[!( num_cols %in% num_exclude)]))
+
+tmcorr = tm[,num_full_corr]
+corrplot(cor(tmcorr), method = 'square', order = 'AOE', addCoef.col = 'black', 
+         cl.pos = 'n', col = COL2('BrBG'))
+```
+
+### Observations:
+- The MonthIncome variable is positively correlated with YearAtCompany, TotalWorkingYears, JobLevel and Age. The rest of the correlations are not significant.
+
+$~$
+
+
 ### Zoomed-in Correlation Matrix
-```{r fig.dim = c(8, 6)}
+```{r fig.dim = c(8, 6), fig.align='center',out.extra='angle=90'}
 #####################################################################################
 #                          Zoomed-in Correlation Matrix                             #
 #####################################################################################
@@ -599,7 +628,7 @@ p = varSel$p.value
 - Assumptions for a t-test has been plotted under the Uni-variate analysis. We can see that the distributions don't look normal but we have enough samples so we can apply CLT therefore this is not a concern.
 - The standard deviations are not equal but t-test would be robust agiants it if the sample sizes are equal. Since the Attrition and No Attrition sample sizes are not equal we cannot assume that the standard deviations are equal. Due to this violation I ran Welch's two sample t-test.
 - We assume independence. 
-H0:μ_Attrition=μ_Not_Attrition
+- H0:μ_Attrition=μ_Not_Attrition
 - Ha:μ_Attrition≠μ_Not_Attrition
 - The test output above shows (incl. p-value) which variable should be included and excluded to the model.
 - Based on the hypothesis test if the p-value > 0.05 then it means that there is not enough evidence to suggest that the "attrition" and "no attrition" groups are different therefore we should not include those variables into the model.
@@ -686,7 +715,7 @@ confusionMatrix(test$Attrition, prediction_test, positive = 'Yes')
 ```
 
 ### Visualize 'k' and the most important features
-```{r}
+```{r, fig.align='center',out.extra='angle=90'}
 # Visualize 'k' and the most important features
 ggplot(KNNM) + ggtitle("Optimal k value for the highest accuracy") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -751,7 +780,7 @@ confusionMatrix(testNB$Attrition, prediction_test, positive = 'Yes')
 $~$
 
 ### Visualize Naive Bayes most important features
-```{r}
+```{r, fig.align='center',out.extra='angle=90'}
 # Visualize the most important features
 NBvarImp = varImp(NB)
 plot(NBvarImp, top = 5, main='Top 5 reason of resignation (Naive Bayes)')
@@ -904,7 +933,7 @@ plot(fit, which = 4)
 - Added categorical variable to the model (trial and error method since we did not have a large number of categorical variables).
 - I split the data to train and test (used as validation) in a 70-30 percent.
 - Used a k-fold cross validation to improve the training of the model.
-- Finally verified the model assumptions and conculded that all are met.
+- Finally verified the model assumptions and concluded that all are met.
 
 $~$
 
@@ -914,3 +943,51 @@ $~$
 3. Implement a program that will encourage younger employees to stay with the company as people with less then 10 years of work experience tend to leave the company more often.
 4. Salary in many cases is an important factor for attrition. Make sure that the salary of the employees stays competitive, even extending the Stock options will help.
 5. I also recommend using the Regression model for predicting monthly salary. This could help the company to retain employees and stay competitive on the job market by better planning salaries. 
+
+
+$~$
+
+## Executive Summary:
+Conducted an analysis for the DDSAnalytics company to prove the value of Data Science and machine learning in the space of talent management. The analysis included 870 employees of the company with 36 attributes of each. The analysis discovered that 
+- There are 7 job roles. 
+- Overall attrition is 16%.
+- ~75% of the employees are between 18 and 43 years of age.
+- There are more Male than Females in the company.
+- The minimum monthly income has a wide range (between 1000 and 19999 dollars)
+- Everybody received salary increase. The min increase was 11% and the max salary increase employee received is 25%.
+- Last year in average employees took training 3 times. 
+- Employees usually stays shorter period with the company.
+- In average employees gets promoted every two years.
+- Employees in average stay with their managers for ~4 years.
+- The median education level of the employees are 3.
+
+Profiled the different Job Roles:
+
+The youngest team is Sales Representatives based on median age.
+The oldest is the managers and research directors followed by Healthcare reps based on median age.
+Managers are living the closest to the office in median distance (<5 miles).
+Most of the employees are living between 5 and 10 miles.
+The median monthly salary are very similar and the lowest for HR, Lab.Tech. Research Scientist and Sales Rep.
+The median monthly salary are very similar and being the mid tier for Healthcare Reps., Manufacturing dir. and Sales Exec.
+The highest paid job roles are Managers and Research Directors.
+The median salary increase is well balanced between the job roles.
+The median Education level is 3 across the job roles. There is a research director with a low level of education. It is not impossible therefore not considered as an outliar.
+Environment satisfaction is at median level 3 for all job roles.
+Median job involvement is 3 for all job roles.
+The median job level is the lowest for HR, Lab. Tech. Research Scientist and Sales Rep.
+Healthcare Reps, Manufacturing Dir., Sales Exec are on median job level 2.
+The highest median job level is 4 for Managers and Research Directors
+On average all job roles and satisfied equally.
+The median number of jobs before is the highest for Research directors and Managers. The most inexperienced employees are Sales Reps., Research Scientist and Lab. Techs.
+The median relationship satisfaction with the manager is equally 3 for all role.
+The median stock option levels are zero for HR and Sales Reps.
+The most experience employees are the managers and Research directors in terms of number of years worked.
+Work life balance is well balanced across job roles.
+Management stays the longest with the company and Sales Reps stays the least.
+Managers and directors are in the longest time in their roles.
+Every role had a promotion in the last two years in median except the Managers.
+In median, most of the roles are 5 years with the current manager except the managers and directors.
+
+Concluded that the top 3 factors for attrition is OverTimem Total WorkingYears and Monthly income. Based on these observations a recommendation was provided. 
+Predcited Monthly Salary for the employees to provide additional competetive advantage for the company. 
+
